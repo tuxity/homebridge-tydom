@@ -106,7 +106,8 @@ export const setupLightbulb = (accessory: PlatformAccessory<LightbulbContext>, c
         callback(err as Error);
       }
     })
-    .getValue();
+    .handleGetRequest()
+    .catch(() => undefined);
 
   service
     .getCharacteristic(Characteristic.Brightness)
@@ -136,7 +137,8 @@ export const setupLightbulb = (accessory: PlatformAccessory<LightbulbContext>, c
         callback(err as Error);
       }
     })
-    .getValue();
+    .handleGetRequest()
+    .catch(() => undefined);
 };
 
 export const updateLightbulb = (

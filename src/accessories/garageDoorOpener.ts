@@ -177,7 +177,8 @@ export const setupGarageDoorOpener = (
         callback(err as Error);
       }
     })
-    .getValue();
+    .handleGetRequest()
+    .catch(() => undefined);
 
   service
     .getCharacteristic(TargetDoorState)
@@ -209,7 +210,10 @@ export const setupGarageDoorOpener = (
           callback();
           return;
         }
-        if (targetDoorState == TargetDoorState.OPEN || (targetDoorState == TargetDoorState.CLOSED && !autoCloseVirtual)) {
+        if (
+          targetDoorState == TargetDoorState.OPEN ||
+          (targetDoorState == TargetDoorState.CLOSED && !autoCloseVirtual)
+        ) {
           await toggleGarageDoor();
         }
         assignCurrentDoorState(nextCurrentDoorState);
@@ -250,7 +254,8 @@ export const setupGarageDoorOpener = (
             break;
           }
           case CurrentDoorState.CLOSING: {
-            const delay = autoCloseDelay && autoCloseVirtual ? 1 * 1000 : (state.computedPosition * garageDoorDelay) / 100;
+            const delay =
+              autoCloseDelay && autoCloseVirtual ? 1 * 1000 : (state.computedPosition * garageDoorDelay) / 100;
             // debug(`delay=${chalkNumber(delay)}`);
             try {
               await waitFor(`${deviceId}.pending`, delay);
@@ -265,7 +270,8 @@ export const setupGarageDoorOpener = (
         callback(err as Error);
       }
     })
-    .getValue();
+    .handleGetRequest()
+    .catch(() => undefined);
 
   // const switchService = addAccessoryService(accessory, Service.Switch, `${accessory.displayName} Switch`, true);
   // debugAddSubService(switchService, accessory);

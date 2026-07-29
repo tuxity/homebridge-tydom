@@ -91,7 +91,8 @@ export const setupWindowCovering = (
         callback(err as Error);
       }
     })
-    .getValue();
+    .handleGetRequest()
+    .catch(() => undefined);
 
   service
     .getCharacteristic(HoldPosition)
@@ -111,8 +112,7 @@ export const setupWindowCovering = (
       ]);
       debugSetResult(HoldPosition, service, value, nextValue);
       callback();
-    })
-    .getValue();
+    });
 
   service
     .getCharacteristic(CurrentPosition)
@@ -128,7 +128,8 @@ export const setupWindowCovering = (
         callback(err as Error);
       }
     })
-    .getValue();
+    .handleGetRequest()
+    .catch(() => undefined);
 
   service
     .getCharacteristic(TargetPosition)
@@ -159,7 +160,8 @@ export const setupWindowCovering = (
         callback(err as Error);
       }
     })
-    .getValue();
+    .handleGetRequest()
+    .catch(() => undefined);
 };
 
 export const updateWindowCovering = (
