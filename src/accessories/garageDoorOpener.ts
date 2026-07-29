@@ -29,6 +29,7 @@ import TydomClient from "tydom-client";
 type GarageDoorOpenerSettings = {
   delay?: number;
   autoCloseDelay?: number;
+  autoCloseVirtual?: boolean;
 };
 type GarageDoorOpenerState = {
   currentDoorState: number;
@@ -72,7 +73,7 @@ export const setupGarageDoorOpener = (
   const levelCmdValues = metadata.find((m) => m.name === "levelCmd")?.enum_values;
   const IS_TOGGLE_ONLY = levelCmdValues?.length === 1 && levelCmdValues[0] === "TOGGLE";
 
-  const { delay: garageDoorDelay = DEFAULT_GARAGE_DOOR_DELAY, autoCloseDelay } = settings;
+  const { delay: garageDoorDelay = DEFAULT_GARAGE_DOOR_DELAY, autoCloseDelay, autoCloseVirtual } = settings;
 
   const assignState = (update: Partial<GarageDoorOpenerState>): void => {
     Object.assign(state, update);
@@ -273,7 +274,11 @@ export const setupGarageDoorOpener = (
         debug(`nextCurrentDoorState=${chalkNumber(nextCurrentDoorState)} === state.currentDoorState`);
         return;
       }
-      await toggleGarageDoor(targetDoorState);
+      // @NOTE with autoCloseVirtual, the door closes itself physically, so only the opening
+      // command is actually sent to Tydom, the closing is merely reflected in HomeKit.
+      if (targetDoorState === TargetDoorState.OPEN || !autoCloseVirtual) {
+        await toggleGarageDoor(targetDoorState);
+      }
       assignCurrentDoorState(nextCurrentDoorState);
 
       // Handle Stopped state, if we are stopped, wait one second and trigger again to reverse course
@@ -303,7 +308,10 @@ export const setupGarageDoorOpener = (
               assignCurrentDoorState(CurrentDoorState.OPEN);
               if (autoCloseDelay) {
                 await waitFor(`${deviceId}.pending`, autoCloseDelay);
-                assignCurrentDoorState(CurrentDoorState.CLOSED);
+                // @NOTE drive the TargetDoorState characteristic rather than assigning the current
+                // state, so the onSet handler above runs the whole closing sequence (and HomeKit
+                // shows the door as "Closing" instead of snapping straight to "Closed").
+                service.getCharacteristic(TargetDoorState).setValue(TargetDoorState.CLOSED);
               }
             } catch (err) {
               debug(`Aborted OPEN update with delay=${chalkNumber(delay)}`);
@@ -311,7 +319,10 @@ export const setupGarageDoorOpener = (
             break;
           }
           case CurrentDoorState.CLOSING: {
-            const delay = (state.computedPosition * garageDoorDelay) / 100;
+            // @NOTE a virtual auto-close has already happened physically, so don't animate the
+            // full travel time, just settle on CLOSED shortly after.
+            const delay =
+              autoCloseDelay && autoCloseVirtual ? 1000 : (state.computedPosition * garageDoorDelay) / 100;
             debug(`delay=${chalkNumber(delay)}`);
             try {
               await waitFor(`${deviceId}.pending`, delay);

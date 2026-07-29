@@ -175,6 +175,25 @@ You can also configure an `autoCloseDelay`
 }
 ```
 
+Set `autoCloseVirtual` to `true` if your garage door closes itself physically after that delay. The
+plugin will then only send the opening command to Tydom and merely reflect the closing in HomeKit,
+instead of sending a second command that would re-open the door.
+
+```json
+{
+  "platforms": [
+    {
+      "settings": {
+        "1529094720": {
+          "autoCloseDelay": 300000, // 5 minutes
+          "autoCloseVirtual": true
+        }
+      }
+    }
+  ]
+}
+```
+
 #### Webhooks
 
 You can specify webhooks in your `config.json` to receive non homekit-dependent notifications.
